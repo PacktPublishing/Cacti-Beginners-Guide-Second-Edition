@@ -1,0 +1,34 @@
+'Set the Variables to the Windows Installer defaults
+strComputer = "."
+strRRDToolDir = "C:\rrdtool"
+strCactiDir = "C:\Apache24\htdocs\cacti"
+'Set the input directory for the XML dumps of your rrd files:
+strInputDir = "C:\xml"
+strLogFile = "C:\xml\Restored.txt"
+
+'Create a shell Executor
+Set objShell = CreateObject("WScript.Shell")
+
+'Create the logfile and Open
+Set objFileSystem = CreateObject("Scripting.fileSystemObject")
+Set objOutputFile = objFileSystem.CreateTextFile(strLogFile, TRUE)
+
+'Open the Computer Object
+Set objWMIService = GetObject("winmgmts:" _
+    & "{impersonationLevel=impersonate}!\\" & strComputer & "\root\cimv2")
+
+'Open the Input Directory and Return a List of all Files
+Set colFileList = objWMIService.ExecQuery _
+    ("ASSOCIATORS OF {Win32_Directory.Name='" & strInputDir & "'} Where " _
+        & "ResultClass = CIM_DataFile")
+
+'Loop through the files and if it's an XML file restore it
+For Each objFile In colFileList
+    If objFile.Extension = "xml" Then
+	objShell.Run & strRRDToolDir & "\rrdtool.exe restore -f " & strInputDir  & "\" _
+	    & objFile.FileName & "." & objFile.Extension & " " & _
+	    strCactiDir & "\rra\" & objFile.FileName
+
+	objOutputFile.WriteLine(objFile.FileName & " was restored.")
+    End If
+Next

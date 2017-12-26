@@ -1,0 +1,6 @@
+            form_alternate_row_color($colors["alternate"], $colors["light"], $i, 'line' . $a_enhancedInfo['Id']); $i++;
+            form_selectable_cell($a_enhancedInfo['Id'], $a_enhancedInfo["Id"]);
+            form_selectable_cell("<a href='cbEnhancedInfo_addInformation.php?action=update&dataId=".$a_enhancedInfo["Id"]."'>".$a_enhancedInfo['hostDescription']."</b></a>",$a_enhancedInfo['Id'],250);
+            form_selectable_cell( $a_enhancedInfo["contactAddress"], $a_enhancedInfo["Id"]);
+            form_checkbox_cell('selected_items', $a_enhancedInfo["Id"]);
+            form_end_row();

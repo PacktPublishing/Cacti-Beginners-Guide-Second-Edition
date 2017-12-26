@@ -1,0 +1,2 @@
+#!/bin/bash
+iostat -dxk $1 5 6 | grep $1

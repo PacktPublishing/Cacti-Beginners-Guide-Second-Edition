@@ -1,0 +1,25 @@
+#!/usr/bin/perl
+
+# Be strict with our variable and method declaration
+use strict;
+
+# Where do we find the secure log file ?
+# Debian/Ubuntu: /var/log/auth.log
+# CentOS/RHEL  : /var/log/secure
+my $secure_log = '/var/log/secure';
+
+# This HASH variable will hold our data
+my %data;
+
+# Retrieve the number of lines containing a "authentication failure” or “Invalid user" string
+$data{'invalid_users'} = `egrep " authentication failure|Invalid user" $secure_log  | wc -l`;
+
+# Retrieve the number of lines containing a "New session” or “Accepted password" string
+$data{'valid_logons'} = `egrep " New session|Accepted password" $secure_log  | wc -l`;
+
+# Remove the line ending character from the string:
+chomp( $data{'invalid_users'} );
+chomp( $data{'valid_logons'} );
+
+# Print the data as "Name1:Var1 Name2:Var2". Do not put a line ending to the string !
+print "InvalidUsers:".$data{'invalid_users'}." ValidLogons:".$data{'valid_logons'};

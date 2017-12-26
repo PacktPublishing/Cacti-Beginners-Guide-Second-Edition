@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+
+use strict;
+
+# Get the command line arguments ( input fields from Cacti )
+my $host = $ARGV[0];
+my $user = $ARGV[1];
+my $diskDevice = $ARGV[2]; # e.g. sda
+
+
+# take care for tcp:hostname or TCP:ip@
+$host =~ s/tcp:/$1/gis;
+my $sshHost = $user.'@'.$host;
+
+# Check the user input for valid data:
+if ( $diskDevice !~ m/[A-Za-z\d]+/ig ) {
+	exit 1;
+}
+if ( $user !~ m/[A-Za-z\d]+/ig ) {
+	exit 1;
+}
+if ( $host !~ m/[A-Za-z\d\.]+/ig ) {
+	exit 1;
+}
+
+my $returnValue = `/usr/bin/ssh $sshHost '/root/getIoStats.sh $diskDevice'`;
+
+# Separate the returned data at the line ending character
+# and store each line as an element of the returnData array
+my @returnData = split/\n/,$returnValue;
+
+# Initialize the Cacti return data
+my %cactiData;
+$cactiData{'device'} = $diskDevice;
+$cactiData{'Reads'} = 0;
+$cactiData{'Writes'} = 0;
+$cactiData{'kbReads'} = 0;
+$cactiData{'kbWrites'} = 0;
+$cactiData{'ioUtil'} = 0;
+
+my $allDataChecks = $#returnData;
+
+# Cycle thorugh each line and skip the very first one ( line = 0 )
+for ( my $line = 1; $line < $allDataChecks; $line++ ) {
+        my @lineData = split/\s+/,$returnData[$line];
+        $cactiData{'Reads'} = $cactiData{'Reads'} + $lineData[3];
+        $cactiData{'Writes'} = $cactiData{'Writes'} + $lineData[4];
+        $cactiData{'kbReads'} = $cactiData{'kbReads'} + $lineData[5];
+        $cactiData{'kbWrites'} = $cactiData{'kbWrites'} + $lineData[6];
+        $cactiData{'ioUtil'} = $cactiData{'ioUtil'} + $lineData[13];
+}
+
+# Average the data
+$cactiData{'Reads'} = $cactiData{'Reads'}  / ($allDataChecks - 1);
+$cactiData{'Writes'} = $cactiData{'Writes'} / ($allDataChecks - 1);
+$cactiData{'kbReads'} = $cactiData{'kbReads'} / ($allDataChecks - 1);
+$cactiData{'kbWrites'} = $cactiData{'kbWrites'} / ($allDataChecks - 1);
+$cactiData{'ioUtil'} = $cactiData{'ioUtil'} / ($allDataChecks - 1);
+
+print "Reads:".$cactiData{'Reads'}." ".
+      "Writes:".$cactiData{'Writes'}." ".
+      "ReadsKb:".$cactiData{'kbReads'}." ".
+      "WritesKb:".$cactiData{'kbWrites'}." ".
+      "ioUtil:".$cactiData{'ioUtil'};
